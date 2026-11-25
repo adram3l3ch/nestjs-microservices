@@ -1,8 +1,22 @@
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { SearchModule } from './search.module.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(SearchModule);
-  await app.listen(process.env.port ?? 3000);
+  process.title = 'search';
+  const logger = new Logger('SearchBootstrap');
+  const PORT = Number(process.env.SEARCH_TCP_PORT ?? 4013);
+
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+    SearchModule,
+    { transport: Transport.TCP, options: { host: '0.0.0.0', port: PORT } },
+  );
+
+  app.enableShutdownHooks();
+  await app.listen();
+
+  logger.log(`Search microservice (TCP) listening on port ${PORT}`);
 }
+
 await bootstrap();
